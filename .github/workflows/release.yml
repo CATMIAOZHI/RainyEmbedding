@@ -22,18 +22,22 @@
          with:
            packages: 'platforms;android-35 build-tools;35.0.0'
 
-       - name: Generate Keystore
-         run: |
-           keytool -genkey -v -keystore release.jks -alias app \
-             -keyalg RSA -keysize 2048 -validity 10000 \
-             -storepass android -keypass android \
-             -dname "CN=RainyEmbedding" -noprompt
+        - name: Generate Keystore
+           run: |
+             keytool -genkey -v -keystore release.jks -alias app \
+               -keyalg RSA -keysize 2048 -validity 10000 \
+               -storepass android -keypass android \
+               -dname "CN=RainyEmbedding" -noprompt
 
-       - run: chmod +x gradlew
+         - run: chmod +x gradlew
 
-       # gradle-wrapper.properties 已使用官方 URL，无需修复
+         # gradle-wrapper.properties 已使用官方 URL，无需修复
 
-       - run: ./gradlew assembleRelease
+         - run: ./gradlew assembleRelease
+           env:
+             RELEASE_STORE_PASSWORD: android
+             RELEASE_KEY_ALIAS: app
+             RELEASE_KEY_PASSWORD: android
 
        - name: Rename APK
          run: cp app/build/outputs/apk/release/app-release.apk "RainyEmbedding-${GITHUB_REF#refs/tags/}.apk"
