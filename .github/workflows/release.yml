@@ -8,7 +8,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # 坑1：不加这行会 403
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -22,22 +22,18 @@ jobs:
         with:
           packages: 'platforms;android-35 build-tools;35.0.0'
 
-      - name: Generate Keystore
+      - name: Decode Keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.jks
+
+      - name: Set Signing Credentials
         run: |
-          keytool -genkey -v -keystore release.jks -alias app \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass android -keypass android \
-            -dname "CN=RainyEmbedding" -noprompt
+          echo "RELEASE_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "RELEASE_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "RELEASE_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
 
       - run: chmod +x gradlew
 
-      # gradle-wrapper.properties 已使用官方 URL，无需修复
-
       - run: ./gradlew assembleRelease
-        env:
-          RELEASE_STORE_PASSWORD: android
-          RELEASE_KEY_ALIAS: app
-          RELEASE_KEY_PASSWORD: android
 
       - name: Rename APK
         run: cp app/build/outputs/apk/release/app-release.apk "RainyEmbedding-${GITHUB_REF#refs/tags/}.apk"
@@ -49,18 +45,12 @@ jobs:
           body: |
             ## 🔢 RainyEmbedding ${{ github.ref_name }}
 
-            纯离线 Android 本地文本向量化服务器 — LiteRT + EmbeddingGemma 300M，OpenAI 兼容 `/v1/embeddings` API。
+            纯离线 Android 本地文本向量化服务器。
 
             ### 📦 安装
             1. 下载 APK 安装
-            2. 打开 App，在「模型管理」中下载 EmbeddingGemma 300M 模型（~179MB）
+            2. 打开 App，在「模型管理」中下载模型
             3. 启动服务，API 地址 `http://127.0.0.1:8081`
-            4. 客户端配置 Endpoint 为 `http://127.0.0.1:8081`，API Key 任意
-
-            ### 🧠 性能
-            - CPU: 66ms@256tokens (XNNPACK)
-            - NPU: 7.8ms@256tokens (Qualcomm HTP)
-            - 内存: ~110MB
 
             ### ⚠️ 注意
             - 模型需在 HuggingFace 上 Accept Gemma License 后下载
