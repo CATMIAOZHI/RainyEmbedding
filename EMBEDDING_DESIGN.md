@@ -11,7 +11,7 @@
 | 核实项 | 结论 | 来源 |
 |--------|------|------|
 | EmbeddingGemma 是否有 TFLite？ | ✅ `litert-community/embeddinggemma-300m` 提供现成 `.tflite`，**无需自己转换** | HF 页面 |
-| LiteRT 最新版本？ | `com.google.ai.edge.litert:litert:2.1.4`（CompiledModel API，2026-04-10） | ai.google.dev |
+| LiteRT 最新版本？ | `com.google.ai.edge.litert:litert:2.1.4`（最新）；实际使用 **2.1.0** | ai.google.dev |
 | TensorFlow Lite 重命名？ | ✅ Google 已将 TFLite 重命名为 **LiteRT**，旧坐标 `org.tensorflow:tensorflow-lite` 已过时 | Google AI Edge 文档 |
 | SentencePiece Android 依赖？ | `com.google.sentencepiece:sentencepiece-android:0.2.0`（Google Maven） | Maven Central |
 | CPU 推理实测速度？ | 66ms@256 tokens, 169ms@512 tokens（S25 Ultra, XNNPACK 4线程） | HF 模型页 |
@@ -111,7 +111,7 @@ endpoint = "http://127.0.0.1:8080/v1"  → "http://127.0.0.1:8080/v1/embeddings"
 ### 🏆 选择：LiteRT CompiledModel API
 
 理由：
-1. `com.google.ai.edge.litert:litert:2.1.4` Google 官方 Maven，Android 原生
+1. `com.google.ai.edge.litert:litert:2.1.0`（实际使用；调研时最新 2.1.4）Google 官方 Maven，Android 原生
 2. EmbeddingGemma 提供现成 `.tflite` 格式（`litert-community/embeddinggemma-300m`）
 3. CPU 66ms@256tokens，NPU 7.8ms@256tokens（S25 Ultra 实测）
 4. 模型 179MB + 运行时 ~110MB，独立 App 内存绰绰有余
@@ -422,7 +422,7 @@ class OpenAIServer(
 # gradle/libs.versions.toml — 新增
 [versions]
 # ... 现有
-litert = "2.1.4"
+litert = "2.1.0"               # ← 实际使用版本（调研时最新为2.1.4）
 sentencepiece = "0.2.0"
 
 [libraries]
@@ -440,7 +440,7 @@ dependencies {
 }
 ```
 
-> **为什么用 `litert:2.1.4` 而不是 `tensorflow-lite:2.17.0`**：Google 已将 TensorFlow Lite 重命名为 LiteRT。v2.x 提供 CompiledModel API（支持 CPU/GPU/NPU 统一加速），v1.x 仅提供 Interpreter API（向后兼容）。推荐 v2.x。
+> **为什么用 `litert:2.1.0` 而不是 `tensorflow-lite:2.17.0`**：Google 已将 TensorFlow Lite 重命名为 LiteRT。v2.x 提供 CompiledModel API（支持 CPU/GPU/NPU 统一加速），v1.x 仅提供 Interpreter API（向后兼容）。推荐 v2.x。
 
 ### 5. LlmServerService.kt 变更
 
@@ -583,7 +583,7 @@ class LlmServerService : Service() {
 
 | 事项 | 说明 | 核实状态 |
 |------|------|:---:|
-| 📦 **依赖坐标** | `com.google.ai.edge.litert:litert:2.1.4`（非 `org.tensorflow:tensorflow-lite`）。Google 已重命名为 LiteRT | ✅ 官方文档核实 |
+| 📦 **依赖坐标** | `com.google.ai.edge.litert:litert:2.1.0`（实际；最新 2.1.4）| ✅ 官方文档核实 |
 | 🧠 **模型格式** | `litert-community/embeddinggemma-300m` 提供现成 `.tflite`，**不需要自己转换** | ✅ HF 页面核实 |
 | 🔤 **Tokenizer** | SentencePiece `tokenizer.model` 需单独下载（~4MB），Maven 依赖 `com.google.sentencepiece:sentencepiece-android:0.2.0` | ✅ 官方指南 |
 | 📐 **维度选择** | 128 维用于节省 Operit 存储，256 维精度更佳。Settings 可调 | ✅ Matryoshka 原生支持 |
